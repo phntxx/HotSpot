@@ -2,11 +2,12 @@
   <head>
   </head>
   <body>
-    <p id="out"></p>
     <input type="text" id="name" placeholder="name">
     <input type="text" id="desc" placeholder="desc">
     <input type="text" id="high" placeholder="high">
+    <div id="out"></div>
     <button onclick="writedata()">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
     <script>
 
@@ -27,12 +28,42 @@
       }
 
       function readdata(){
-        var ref = firebase.database().ref('posts');
-        ref.on("value", function(snapshot) {
-        document.getElementById("out").innerHTML = snapshot.val().name + " --- " + snapshot.val().up + " --- " + snapshot.val().down;
-        }, function (error) {
-          document.getElementById("out").innerHTML = error.code;
+        firebase.database().ref('posts').on("child_added", function(snapshot) {
+          var container = document.getElementById("out");
+          var cell = document.createElement("div");
+
+          var h1 = $('<h1/>', { text: snapshot.toJSON().name});
+          $(cell).append(h1);
+
+          var h2 = $('<h2/>', { text: snapshot.toJSON().up - snapshot.toJSON().down});
+          $(cell).append(h2);
+
+          var p1 = $('<p/>', { text: snapshot.toJSON().high });
+          $(cell).append(p1);
+
+          var p2 = $('<p/>', { text: snapshot.toJSON().desc });
+          $(cell).append(p2);
+
+          var up = $('<button/>', { click: function(){buttonclicked("up", snapshot.key, snapshot.toJSON().up)}, text: "UP"});
+          $(cell).append(up);
+
+          var down = $('<button/>', { click: function(){buttonclicked("down", snapshot.key, snapshot.toJSON().down)}, text: "DOWN"});
+          $(cell).append(down);
+
+          container.appendChild(cell);
         });
+      }
+
+      function buttonclicked(action, id, current){
+        if(action == "up"){
+          alert("voting up on post with id " + id);
+          firebase.database().ref().child('/posts/' + id).update({up: current + 1});
+          window.location = "backend.html";
+        } else if(action == "down"){
+          alert("voting down on post with id " + id);
+          firebase.database().ref().child('/posts/' + id).update({down: current + 1});
+          window.location = "backend.html";
+        }
       }
 
       function writedata(){
@@ -41,8 +72,7 @@
         var high = document.getElementById("high").value;
 
         function call(position){
-          alert(name + " --- " + desc + " --- " + high + " --- " + position.coords.latitude + " --- " + position.coords.longitude);
-          firebase.database().ref('posts').set({
+          firebase.database().ref('posts').push({
             name: name,
             high: high,
             desc: desc,
@@ -51,7 +81,6 @@
             up: 0,
             down: 0
           });
-
         }
 
         getLocation(call);
