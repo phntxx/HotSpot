@@ -1,0 +1,30 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <h1>hi</h1>
+    <script>
+/*
+      var config = {
+        apiKey: "AIzaSyAHMCGzbw2MjuAY304_dbzuPssyiETDMvM",
+        authDomain: "hotspot-ac169.firebaseapp.com",
+        databaseURL: "https://hotspot-ac169.firebaseio.com",
+        projectId: "hotspot-ac169",
+        storageBucket: "hotspot-ac169.appspot.com",
+        messagingSenderId: "252315038762"
+      };
+      firebase.initializeApp(config);
+*/
+      function getLocation(){
+        if(navigator.geolocation){
+          navigator.geolocation.getCurrentPosition(function(position){
+            alert(position.coords.latitude + " -- " + position.coords.longitude);
+          });
+        }
+      }
+
+      getLocation();
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
+  </body>
+</html>
