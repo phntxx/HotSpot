@@ -20,22 +20,6 @@
     <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
     <script>
 
-      function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 3,
-          center: {lat: -28.024, lng: 140.887}
-        });
-
-        var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        var markers = locations.map(function(location, i) {
-          return new google.maps.Marker({
-            position: location,
-            label: labels[i % labels.length]
-          });
-        });
-        var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
-      }
-
       var config = {
         apiKey: "AIzaSyAHMCGzbw2MjuAY304_dbzuPssyiETDMvM",
         authDomain: "hotspot-ac169.firebaseapp.com",
@@ -46,19 +30,48 @@
       };
       firebase.initializeApp(config);
 
-      firebase.database().ref('posts').on("child_added", function(snapshot) {
-        var location = [];
-        snapshot.forEach(function(childsnap){
-          window.aa = childsnap.key();
-          location.push({lat: childsnap.toJSON().lat, lng: childsnap.toJSON().lng});
-          //window.aa = location;
-        });
-      });
+      function getLocations(callback){
+        firebase.database().ref('posts').once('value').then(callback);
+      }
 
-      var locations = [
-        {lat: -33.718234, lng: 150.363181},
-        {lat: -33.727111, lng: 150.371124}
-      ]
+      function geotag(callback){
+        if(navigator.geolocation){
+          navigator.geolocation.getCurrentPosition(callback);
+        }
+      }
+
+      function initMap() {
+
+
+        function call(snapshot){
+          var locationmap = [];
+          snapshot.forEach(function(childsnap){
+            locationmap.push({lat: childsnap.val().lat, lng: childsnap.val().lng});
+
+            function get(coords){
+              var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 3,
+                center: {lat: coords.coords.latitude, lng: coords.coords.longitude}
+              });
+
+              var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+              var markers = locationmap.map(function(location, i) {
+                return new google.maps.Marker({
+                  position: location,
+                  label: labels[i % labels.length]
+                });
+              });
+              var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+            }
+
+            geotag(get);
+            
+          });
+        }
+
+
+        getLocations(call);
+      }
 
     </script>
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
