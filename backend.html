@@ -2,10 +2,11 @@
   <head>
   </head>
   <body>
+    <p id="out"></p>
     <input type="text" id="name" placeholder="name">
     <input type="text" id="desc" placeholder="desc">
     <input type="text" id="high" placeholder="high">
-    <button onclick="writeuserdata()">
+    <button onclick="writedata()">
     <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
     <script>
 
@@ -25,14 +26,22 @@
         }
       }
 
-      function writeuserdata(){
+      function readdata(){
+        var ref = firebase.database().ref('posts');
+        ref.on("value", function(snapshot) {
+        document.getElementById("out").innerHTML = snapshot.val().name + " --- " + snapshot.val().up + " --- " + snapshot.val().down;
+        }, function (error) {
+          document.getElementById("out").innerHTML = error.code;
+        });
+      }
+
+      function writedata(){
         var name = document.getElementById("name").value;
         var desc = document.getElementById("desc").value;
         var high = document.getElementById("high").value;
 
         function call(position){
           alert(name + " --- " + desc + " --- " + high + " --- " + position.coords.latitude + " --- " + position.coords.longitude);
-
           firebase.database().ref('posts').set({
             name: name,
             high: high,
@@ -47,6 +56,8 @@
 
         getLocation(call);
       }
+
+      readdata();
 
     </script>
   </body>
