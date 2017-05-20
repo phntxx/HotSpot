@@ -42,33 +42,48 @@
 
       function initMap() {
 
-
         function call(snapshot){
           var locationmap = [];
           snapshot.forEach(function(childsnap){
             locationmap.push({lat: childsnap.val().lat, lng: childsnap.val().lng});
 
             function get(coords){
-              var map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 3,
-                center: {lat: coords.coords.latitude, lng: coords.coords.longitude}
-              });
+              var map = new google.maps.Map(document.getElementById('map'), {zoom: 3, center: {lat: coords.coords.latitude, lng: coords.coords.longitude}});
 
-              var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-              var markers = locationmap.map(function(location, i) {
-                return new google.maps.Marker({
-                  position: location,
-                  label: labels[i % labels.length]
-                });
-              });
-              var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+              for (var i = 0; i < locationmap.length; i++){
+                var collection = new Array();
+                collection.push(new google.maps.LatLng(locationmap[i].lat, locationmap[i].lng));
+
+                for(var j = 0; j < collection.length; j++){
+                  var pointMarker = new Array();
+                  pointMarker.push(
+                    new google.maps.Marker({
+                      position: collection[j],
+                      map: map,
+                      title: j.toString()
+                    })
+                  );
+
+
+
+                  pointMarker[j] = new google.maps.Marker({
+                    position: collection[j],
+                    map: map,
+                    title: j.toString()
+                  });
+
+                  window.aa = pointMarker[0].position.lat();
+                  google.maps.event.addListener(pointMarker[j], 'click', function(data){
+                    console.log();
+                    //alert(pointMarker[j].position.lat());
+                  });
+                }
+              }
             }
 
             geotag(get);
-            
           });
         }
-
 
         getLocations(call);
       }
