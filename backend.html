@@ -1,7 +1,7 @@
 <html>
   <head>
     <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&v=3&libraries=geometry"></script>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="./bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
   </head>
   <body>
     <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -18,9 +18,9 @@
         <div id="navbar" class="navbar-collapse collapse">
           <form class="navbar-form navbar-right">
             <div class="form-group">
-              <input type="text" id="name" placeholder="name" class="form-control">
-              <input type="text" id="desc" placeholder="desc" class="form-control">
-              <input type="text" id="high" placeholder="high" class="form-control">
+              <input type="text" id="name" placeholder="Location" class="form-control">
+              <input type="text" id="high" placeholder="Highlight" class="form-control">
+              <input type="text" id="desc" placeholder="Description" class="form-control">
             </div>
             <button class="btn btn-success" onclick="writedata()">POST</button>
             <button class="btn btn-danger" onclick="showmap()">MAP</button>
@@ -29,8 +29,6 @@
       </div>
     </nav>
     <div id="out"></div>
-    <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD88F5C1hUomNGEvSjqbVSmE0gVU5Z_ang&callback=initMap"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
@@ -52,47 +50,88 @@
 
       function getLocation(callback){
         if(navigator.geolocation){
+          alert("Got real Geolocation");
           navigator.geolocation.getCurrentPosition(callback);
+        } else {
+          alert("Error: Geolocation could not be retrieved. Using Coordinates from intive Kupferwerk Regensburg");
+          return callback({coords: {latitude: 49.01703982455667, longitude: 12.122057458875155}});
         }
       }
 
       function readdata(){
-        firebase.database().ref('posts').on("child_added", function(snapshot) {
+        firebase.database().ref('posts').orderByChild('up').on("child_added", function(snapshot) {
           var container = document.getElementById("out");
           if(snapshot.toJSON().created_at == new Date().toLocaleDateString()){
             var cell = document.createElement("div");
-
+            cell.className = "row jumbotron";
             function call2(position){
-              cell.className = "row jumbotron";
+              //FIX
+              var value = (snapshot.toJSON().up - snapshot.toJSON().down);
 
-              
+              if(value < 0){
+                cell.style.backgroundColor = "#1a237e";
+              } else if(value == 0){
+                cell.style.backgroundColor = "#3498db";
+              } else if(value > 0){
+                cell.style.backgroundColor = "#f39c12";
+                if(value > 5){
+                  cell.style.backgroundColor = "#e67e22";
+                  if(value > 10){
+                    cell.style.backgroundColor = "#e74c3c";
+                    if(value > 15){
+                      cell.style.backgroundColor = "#c0392b";
+                    } else {
+                      cell.style.backgroundColor = "#e74c3c";
+                    }
+                  } else {
+                    cell.style.backgroundColor = "#e67e22";
+                  }
+                } else {
+                  cell.style.backgroundColor = "#f39c12";
+                }
+              }
 
-
-
-
-
-              cell.backgroundColor = "red";
               var data = $('<div/>', {class: "col-md-11"});
+                $(data).css("padding-left", "50px");
                 var name = $('<h1/>', {text: snapshot.toJSON().name});
                 $(data).append(name);
                 var high = $('<p/>', {text: snapshot.toJSON().high});
                 $(data).append(high);
+                var slidedown = $('<button/>', {text: "toggle", class: "btn btn-danger btn-lg btn"});
+                $(data).append(slidedown);
+                var slideup = $('<button/>', {text: "toggle", class: "btn btn-danger btn-lg btn"});
+                $(slideup).slideUp('fast');
+                $(data).append(slideup);
                 var desc = $('<p/>', {text: snapshot.toJSON().desc});
+                $(desc).slideUp('fast');
                 $(data).append(desc);
               $(cell).append(data);
+
+              $(slideup).click(function(){
+                $(slidedown).slideDown('slow');
+                $(slideup).slideUp('slow');
+                $(desc).slideUp('slow');
+              });
+
+              $(slidedown).click(function(){
+                $(slidedown).slideUp('slow');
+                $(slideup).slideDown('slow');
+                $(desc).slideDown('slow');
+              });
 
               var locationfrom = new google.maps.LatLng({lat: position.coords.latitude, lng: position.coords.longitude});
               var locationto = new google.maps.LatLng({lat: snapshot.toJSON().lat, lng: snapshot.toJSON().lng});
               var dist = google.maps.geometry.spherical.computeDistanceBetween(locationfrom, locationto);
 
-              var rating = $('<div/>', {class: "col-md-1"});
-                var up = $('<button/>', {click: function(){buttonclicked("up", snapshot.key, snapshot.toJSON().up)}, text: "UP"});
+              var rating = $('<div/>', {class: "col-md-1 special"});
+
+                var up = $('<img/>', {click: function(){buttonclicked("up", snapshot.key, snapshot.toJSON().up)}, src: "fire.png", width: "30px", height: "30px"});
                 $(rating).append(up);
-                var votes = $('<p/>', {text: snapshot.toJSON().up - snapshot.toJSON().down});
+                var votes = $('<p/>', {text: (snapshot.toJSON().up - snapshot.toJSON().down) + " Grad"});
                 $(rating).append(votes);
-                var down = $('<button/>', {click: function(){buttonclicked("down", snapshot.key, snapshot.toJSON().down)}, text: "DOWN"});
+                var down = $('<img/>', {click: function(){buttonclicked("down", snapshot.key, snapshot.toJSON().down)}, src: "snowflake.png", width: "30px", height: "30px"});
                 $(rating).append(down);
-                var distance = $('<p/>', {text: "ca. " + Math.ceil(dist) + "m"});
+                var distance = $('<p/>', {text: "ca. " + Math.ceil(dist) + "m", class: "fuckme"});
                 $(rating).append(distance);
               $(cell).append(rating);
 
@@ -101,7 +140,6 @@
             }
 
             getLocation(call2);
-
 
           }
         });
@@ -123,7 +161,9 @@
         var high = document.getElementById("high").value;
 
         function call(position){
-          if(name != null && desc != null && high != null && lat != null && lng != null){
+            alert(position.coords.latitude);
+            alert(position.coords.longitude);
+            window.aa = position;
             firebase.database().ref('posts').push({
               name: name,
               high: high,
@@ -134,13 +174,27 @@
               up: 0,
               down: 0
             });
-          } else {
-            window.location = "./backend.html";
-          }
+
         }
 
         getLocation(call);
       }
+
+
+      function fill(){
+        firebase.database().ref('posts').push({
+          name: "Beats",
+          high: "Schlagerkonzert",
+          desc: "Pretty lit",
+          created_at: new Date().toLocaleDateString(),
+          lat: 49.01703982455667,
+          lng: 12.122057458875155,
+          up: 0,
+          down: 0
+        });
+      }
+
+      //fill();
 
       readdata();
 

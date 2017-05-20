@@ -1,5 +1,5 @@
 rot: #c0392b
 hellort: #e74c3c
-dunkel orange:#e67e22
+dunkel orange:
 hellorange: #f39c12
 blue: #3498db
